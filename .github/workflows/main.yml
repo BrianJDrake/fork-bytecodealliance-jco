@@ -1,10 +1,8 @@
-name: CI
+name: Test Node.js ES module exports
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  - push
+  - pull_request
 
 defaults:
   run:
@@ -26,6 +24,12 @@ jobs:
             windows,
             macos
         ]
+        node: [
+          lts/*,   # Original CI configuration
+          20.8.1,  # Latest at https://github.com/actions/node-versions/releases
+          18.18.2, # LTS at https://nodejs.org/
+          12.22.12 # Debian 11
+        ]
         include:
           - name: linux
             os: ubuntu-latest
@@ -36,64 +40,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
-    - name: Install Rust
-      run: rustup update stable --no-self-update && rustup default stable
-    - name: Install wasm32-unknown-unknown target
-      run: rustup target add wasm32-unknown-unknown
-    - name: Install wasm32-wasi target
-      run: rustup target add wasm32-wasi
-
-    - run: |
-        curl https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/wasi-sdk-16.0-linux.tar.gz -L | tar xzvf -
-        echo "WASI_SDK_PATH=`pwd`/wasi-sdk-16.0" >> $GITHUB_ENV
-      if : matrix.os == 'ubuntu-latest'
-    - run: |
-        curl https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/wasi-sdk-16.0-macos.tar.gz -L | tar xzvf -
-        echo "WASI_SDK_PATH=`pwd`/wasi-sdk-16.0" >> $GITHUB_ENV
-      if : matrix.os == 'macos-latest'
-    - run: |
-        curl https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-16/wasi-sdk-16.0-mingw.tar.gz -L | tar xzvf -
-        echo "WASI_SDK_PATH=`pwd`/wasi-sdk-16.0" >> $GITHUB_ENV
-      if : matrix.os == 'windows-latest'
-
-    - uses: actions/setup-node@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
       with:
-        node-version: 'lts/*'
-    - name: Install NPM packages
-      run: npm install
-
-    - name: Build
-      run: npm run build
-
+        node-version: ${{ matrix.node }}
     - name: Test
-      run: npm run test
-
-  test-workspaces:
-    name: Test Workspaces
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install NPM packages
-      run: npm install
-    - name: Test Workspaces
-      run: npm run test --workspaces
-
-  eslint:
-    name: ESLint
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install NPM packages
-      run: npm install
-    - name: Lint
-      run: npm run lint
-
-  rustfmt:
-    name: Rustfmt
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - name: Install Rust
-      run: rustup update stable && rustup default stable && rustup component add rustfmt
-    - name: Format source code
-      run: cargo fmt -- --check
+      run: node index.js
