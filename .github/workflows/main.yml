@@ -28,7 +28,7 @@ jobs:
           lts/*,   # Original CI configuration
           20.8.1,  # Latest at https://github.com/actions/node-versions/releases
           18.18.2, # LTS at https://nodejs.org/
-          12.22.12 # Debian 11
+          # 12.22.12 (Debian 11) (fails)
         ]
         include:
           - name: linux
